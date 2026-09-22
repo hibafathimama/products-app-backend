@@ -1,43 +1,51 @@
-import dotenv from 'dotenv'
-import cors from 'cors'
-import express from 'express'
-import { connectDB } from './config/connectDB.js'
-import routes from './routes/authRoutes.js'
-import productRoutes from "./routes/productRoutes.js";
-// import errorMiddleware from './middleware/errorMiddleware.js'
+import dotenv from 'dotenv';
+import cors from 'cors';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+import { connectDB } from './config/connectDB.js';
+import routes from './routes/authRoutes.js';
+import productRoutes from './routes/productRoutes.js';
 
-//load .env variable
-dotenv.config()
+// Load .env variables
+dotenv.config();
 
+// Create __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-//port define,express call
-const PORT = process.env.PORT || 5000
-const app = express()
+// Port
+const PORT = process.env.PORT || 5000;
 
-//connect to mongodbe
-connectDB()
+// Express app
+const app = express();
 
-//middleware
+// Connect to MongoDB
+connectDB();
+
+// Middleware
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 
-app.use("/api/users",routes)
-app.use("/api/products",productRoutes)
-app.use('/uploads', express.static('uploads'));
+// Serve uploaded images
+app.use(
+    '/uploads',
+    express.static(path.join(__dirname, 'uploads'))
+);
 
-// app.use(errorMiddleware);
+// Routes
+app.use('/api/users', routes);
+app.use('/api/products', productRoutes);
 
-//global error handling
+// Global error handling
 app.use((error, req, res, next) => {
-
     res.status(error.statusCode || 500).json({
-        message: error.message || "An unknown error occurred",
+        message: error.message || 'An unknown error occurred',
     });
-
 });
 
-//start server
-app.listen(PORT,() => console.log(`server running on http://localhost:${PORT}`))
-
-
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});

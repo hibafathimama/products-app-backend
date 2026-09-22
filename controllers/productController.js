@@ -4,7 +4,6 @@ import { validationResult } from "express-validator";
 
 
 export const addproduct = async(req,res,next)=>{
-            console.log("ADD PRODUCT CONTROLLER CALLED");
   console.log("PRODUCT BODY:", req.body);
   console.log("USER DATA:", req.user_data);
 
@@ -18,8 +17,8 @@ export const addproduct = async(req,res,next)=>{
             const{title,price,cateogary,description}=req.body;
             const imagepath = req.file ? req.file.path : null;           
             const {user_id: sellerId, user_role: tokenRole}=req.user_data;
-console.log("SELLER ID:", sellerId);
-    console.log("ROLE:", tokenRole);
+            console.log("SELLER ID:", sellerId);
+            console.log("ROLE:", tokenRole);    
 
 
             if (tokenRole !=="seller"){
@@ -38,14 +37,14 @@ console.log("SELLER ID:", sellerId);
                 })
                 console.log("BEFORE SAVE:", newProduct);
 
-    await newProduct.save();
+                await newProduct.save();
 
-console.log("PRODUCT SAVED:");
-console.log(newProduct);
-console.log("PRODUCT ID:", newProduct._id);
-const testProducts = await product.find();
+                console.log("PRODUCT SAVED:");
+                console.log(newProduct);
+                console.log("PRODUCT ID:", newProduct._id);
+                const testProducts = await product.find();
 
-console.log("PRODUCTS AFTER SAVE:", testProducts);
+                console.log("PRODUCTS AFTER SAVE:", testProducts);
 
 
                 if(!newProduct){
@@ -118,7 +117,12 @@ export const listallproduct = async (req, res, next) => {
         console.log("SELLER ID:", sellerId);
         console.log("ROLE:", tokenRole);
 
+        //pagination
+        const limit =parseInt(req.query.limit)||4;
+        const skip =parseInt(req.query.skip)||0;
+
         let listproducts;
+        let total;
 
         if (tokenRole === "seller") {
 
@@ -128,15 +132,29 @@ export const listallproduct = async (req, res, next) => {
             }).populate({
                 path: "seller",
                 select: "firstName"
+            })
+            .skip(skip)
+            .limit(limit);
+            
+            //total product of this seller
+            total = await product.countDocuments({
+                seller :sellerId,
+                is_deleted:false
             });
 
         } else if (tokenRole === "buyer") {
+            //buyers see all the products
 
             listproducts = await product.find({
                 is_deleted: false
             }).populate({
                 path: "seller",
                 select: "firstName"
+            })
+            .skip(skip)
+            .limit(limit);
+            total = await product.countDocuments({
+                is_deleted: false
             });
 
         } else {
@@ -150,7 +168,8 @@ export const listallproduct = async (req, res, next) => {
         return res.status(200).json({
             status: true,
             message: "product fetched successfully",
-            data: listproducts
+            data: listproducts,
+            total:total
         });
 
     } catch (error) {
