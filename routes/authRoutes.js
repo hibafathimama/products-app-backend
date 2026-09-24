@@ -34,7 +34,12 @@ router.post('/login',
     ],
     
     userLogin)
-router.put("/updateuser",userAuthCheck,upload.none(),updateuser)
+
+router.put("/updateuser",
+  userAuthCheck,
+  upload.single("image"),
+  updateuser
+)
 router.get("/getoneuser",userAuthCheck,getOneUser)
 
 

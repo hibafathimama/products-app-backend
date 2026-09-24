@@ -101,7 +101,14 @@ export const deleteproduct = async (req,res,next)=>{
        
 }
  catch(error){
-    return next(new HttpError(error.message, 403));
+    console.error("DELETE PRODUCT ERROR:", error);
+
+    return next(
+        new HttpError(
+            error.message || "Something went wrong",
+            500
+        )
+    );
 }
 };
 
@@ -257,8 +264,8 @@ export const getoneproduct = async (req,res,next)=>{
     }
 }
 
-export const editproduct = async (req,res,next)=>{
-    try{
+export const editproduct = async (req, res, next) => {
+    try {
         const errors = validationResult(req);
 
         if (!errors.isEmpty()) {
@@ -270,45 +277,69 @@ export const editproduct = async (req,res,next)=>{
             );
         }
 
-         const {id}=req.params;
-         const {title,price,cateogary,description}=req.body;
+        const { id } = req.params;
 
-         //data from middleware
-          const {user_id: sellerId, user_role: tokenRole}=req.user_data
+        const {
+            title,
+            price,
+            cateogary,
+            description
+        } = req.body;
 
-            if (tokenRole !=="seller"){
-                return next(new HttpError("you are not a seller",403))
-            }
-            else{
-                const update={
-                    title:title,
-                    price:price,
-                    cateogary:cateogary,
-                    description:description,
-                 
-                }
-            
-            const editedproduct = await product.findOneAndUpdate(
-                {_id:id,seller:sellerId,is_deleted:false},
-                update,
-                {new:true}
+        const {
+            user_id: sellerId,
+            user_role: tokenRole
+        } = req.user_data;
+
+        // Check seller
+        if (tokenRole !== "seller") {
+            return next(
+                new HttpError("You are not a seller", 403)
             );
-        
-            if(!editedproduct){
-                return next (new HttpError("product not found"));
-            }
-            return res.status(200).json({
-                status:true,
-                message:"product updated successfully",
-                data:editedproduct 
-            })
+        }
 
-    }}
-  catch(error){
-    console.error("EDIT PRODUCT ERROR:", error);
+        const update = {
+            title: title,
+            price: price,
+            cateogary: cateogary,
+            description: description,
+        };
 
-    return next(
-        new HttpError(error.message || "Oops! Something went wrong", 500)
-    );
-}
+        // If a new image was selected
+        if (req.file) {
+            update.image = req.file.path;
+        }
+
+        const editedproduct = await product.findOneAndUpdate(
+            {
+                _id: id,
+                seller: sellerId,
+                is_deleted: false
+            },
+            update,
+            { new: true }
+        );
+
+        if (!editedproduct) {
+            return next(
+                new HttpError("Product not found", 404)
+            );
+        }
+
+        return res.status(200).json({
+            status: true,
+            message: "Product updated successfully",
+            data: editedproduct
+        });
+
+    } catch (error) {
+        console.error("EDIT PRODUCT ERROR:", error);
+
+        return next(
+            new HttpError(
+                error.message || "Oops! Something went wrong",
+                500
+            )
+        );
+    }
 };

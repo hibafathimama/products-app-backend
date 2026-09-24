@@ -5,7 +5,7 @@ export const updateuser = async (req, res, next) => {
   try {
     const {firstName, lastName,email,} =req.body;
     const {user_id,user_role} =req.user_data;
-    // const imagePath = req.file ? req.file.path : null
+    const imagePath = req.file ? req.file.path : null
 
     // Check whether another user is already using this email
     const existinguser = await User.findOne({ _id: { $ne: user_id }, email:email})
@@ -20,9 +20,9 @@ export const updateuser = async (req, res, next) => {
     const updatedfields ={
       firstName,email,lastName
     };
-    // if (imagePath) {
-    //   updatedfields.image = imagePath;
-    //  }
+    if (imagePath) {
+      updatedfields.image = imagePath;
+     }
 
    const updatedusers = await User.findOneAndUpdate(
     { _id: user_id },

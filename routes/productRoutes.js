@@ -38,8 +38,11 @@ router.delete("/:id",userAuthCheck, deleteproduct)
 router.get("/listallproduct",userAuthCheck,listallproduct)
 router.get("/:id", getoneproduct)
 
-router.put("/:id",upload.none(),
-    [        check("id")
+router.put(
+    "/:id",
+    upload.single("image"),
+    [
+        check("id")
             .isMongoId()
             .withMessage("Invalid product ID"),
 
@@ -62,8 +65,8 @@ router.put("/:id",upload.none(),
             .optional()
             .notEmpty()
             .withMessage("Description cannot be empty")
-
-     ] ,
-    editproduct)
+    ],
+    editproduct
+);
 
 export default router;
